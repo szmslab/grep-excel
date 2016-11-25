@@ -1,0 +1,103 @@
+apply plugin: 'maven'
+apply plugin: 'application'
+
+group = 'com.szmslab.grepexcel'
+version = '1.0.1'
+description = 'a utility for searching Excel files for cells that contain lines matching to a specified pattern'
+
+project.ext {
+    url = 'https://github.com/szmslab/grep-excel'
+    sharedManifest = manifest {
+        attributes (
+                'Built-By': System.getProperty('user.name'),
+                'Created-By': "Gradle ${gradle.gradleVersion}",
+                'Build-Jdk': System.getProperty('java.version')
+        )
+    }
+    jarManifest = manifest {
+        attributes (
+                'Implementation-Title': project.name,
+                'Implementation-Version': version,
+                'Implementation-Vendor-Id': group,
+                'Implementation-URL': project.url
+        )
+    }
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'args4j:args4j:2.33'
+    compile 'org.apache.poi:poi:3.14'
+    compile 'org.apache.poi:poi-ooxml:3.14'
+    compile 'com.github.mygreen:excel-cellformatter:0.8.3'
+    compile 'org.slf4j:slf4j-api:1.7.21'
+    compile 'ch.qos.logback:logback-classic:1.1.7'
+    testCompile 'junit:junit:4.12'
+}
+
+jar {
+    manifest {
+        from sharedManifest
+        from jarManifest
+    }
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+    manifest {
+        from sharedManifest
+    }
+}
+
+artifacts {
+    archives sourcesJar
+}
+
+mainClassName = 'com.szmslab.grepexcel.cli.App'
+
+startScripts {
+    applicationName = 'grepexcel'
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: new File(System.getProperty("user.home"), '.mvn-temp-repository').toURI())
+            pom.project {
+                packaging 'jar'
+                name project.name
+                description project.description
+                url project.url
+                licenses {
+                    license {
+                        name 'The MIT License'
+                        url 'http://opensource.org/licenses/mit-license.php'
+                    }
+                }
+            }
+        }
+    }
+}
+
+task unzipDistribution(type: Copy) {
+    ext {
+        archivesName = "${archivesBaseName}-${version}"
+        distsDir = new File("${distsDir}")
+    }
+    from zipTree(new File("${archivesName}.zip", distsDir))
+    into distsDir
+}
+unzipDistribution << {
+    new File("${archivesName}", distsDir).renameTo(new File('out', distsDir))
+}

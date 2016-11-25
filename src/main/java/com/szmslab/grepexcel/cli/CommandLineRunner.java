@@ -20,6 +20,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -156,12 +157,8 @@ class CommandLineRunner {
      * バージョンを表示します。
      */
     private void version() {
-        String version = "x.x.x";
-        try (BufferedReader br = new BufferedReader(
-                new InputStreamReader(ClassLoader.getSystemResourceAsStream("version.txt")))) {
-            version = br.lines().findFirst().orElse(version);
-        } catch (IOException ignored) {
-        }
+        String version =
+                Optional.ofNullable(this.getClass().getPackage().getImplementationVersion()).orElse("x.x.x");
         System.out.println(COMMAND + " version " + version
                 + " (" + "Java version " + System.getProperty("java.version") + ")");
     }
